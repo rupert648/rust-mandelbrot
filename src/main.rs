@@ -1,4 +1,11 @@
-use pixel_canvas::{Canvas, Color, input::MouseState};
+mod event_handlers;
+mod state;
+
+use pixel_canvas::input::glutin::event::{MouseButton};
+use pixel_canvas::{Canvas, Color};
+
+use crate::event_handlers::event_handler;
+use crate::state::ProgramState;
 
 fn main() {
     let width = 1200;
@@ -7,26 +14,17 @@ fn main() {
 
     let canvas = Canvas::new(width as usize, height as usize)
         .title("Mandelbrot")
-        .state(MouseState::new())
-        .input(MouseState::handle_input);    
+        .state(ProgramState::new())
+        .input(event_handler);
 
-    let mut frame_count = 0;
-    // frames before increasing the mandelbrot iteration
-    let frames_per_iteration = 1;
-    let mut current_iterations = 1;
-    let iteration_step = 1;
+    let mut current_iterations = 10;
     let mut pixels = calculate_mandelbrot(current_iterations, width, height);
     
-    canvas.render(move |_mouse, image| {
-
-        // unless we've reached the maximum number of iterations
-        // if we've exceeded the frame frame_count, recalcualte the points
-        // on the mandelbrot using an incremented iterations amount
-        if current_iterations < max_iterations && frame_count > frames_per_iteration {
-            frame_count = 0;
-            current_iterations += iteration_step;
-            pixels = calculate_mandelbrot(current_iterations, width, height);
-            println!("Number of iterations: {}", current_iterations);
+    canvas.render(move |state, image| {
+        // check if we have handled the most recent mouse click
+        if !state.mouse_click_handled {
+            mouse_clicked(state, &mut current_iterations, max_iterations, &mut pixels, width, height);
+            state.mouse_click_handled = true
         }
         
         let width = image.width() as usize;
@@ -36,10 +34,23 @@ fn main() {
             }
         }
 
-        frame_count += 1;
     });
     
 }
+
+fn mouse_clicked(state: &mut ProgramState, current_iterations: &mut u32, max_iterations: u32, pixels: &mut Vec<Vec<Color>>, width: u32, height: u32) {
+    let click_change_amount = 10;
+    // right click increases iterations
+    // left click decreases iteration
+    match state.mouse_button {
+        MouseButton::Left => *current_iterations = if *current_iterations <= click_change_amount { click_change_amount } else { *current_iterations-click_change_amount },
+        MouseButton::Right => *current_iterations = if *current_iterations >= max_iterations { max_iterations } else { *current_iterations+click_change_amount },
+        _ => ()
+    }
+    // recalculate the mandelbrot based upon the new iteration amount
+    *pixels = calculate_mandelbrot(*current_iterations, width, height);
+}
+
 
 fn calculate_mandelbrot(max_iterations: u32, width_u32: u32, height_u32: u32) -> Vec<Vec<Color>> {
     let default_color = Color {
