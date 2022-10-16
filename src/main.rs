@@ -47,7 +47,6 @@ fn mouse_clicked(state: &mut ProgramState, current_iterations: &mut u32, max_ite
         MouseButton::Right => *current_iterations = if *current_iterations >= max_iterations { max_iterations } else { *current_iterations+click_change_amount },
         _ => ()
     }
-    println!("in here");
     // recalculate the mandelbrot based upon the new iteration amount
     *pixels = calculate_mandelbrot(*current_iterations, width, height);
 }
