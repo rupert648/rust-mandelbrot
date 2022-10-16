@@ -1,28 +1,42 @@
 use pixel_canvas::{Canvas, Color, input::MouseState};
 
 fn main() {
-    let width = 1920;
-    let height = 1080;
-    let max_iterations = 100;
-    let pixels = calculate_mandelbrot(max_iterations, width, height);
-    println!("===== Finished Calculating... =====");
+    let width = 1200;
+    let height = 900;
+    let max_iterations = 1000;
 
-    // Configure the window that you want to draw in. You can add an event
-    // handler to build interactive art. Input handlers for common use are
-    // provided.
     let canvas = Canvas::new(width as usize, height as usize)
         .title("Mandelbrot")
         .state(MouseState::new())
-        .input(MouseState::handle_input);
-    // The canvas will render for you at up to 60fps.
+        .input(MouseState::handle_input);    
+
+    let mut frame_count = 0;
+    // frames before increasing the mandelbrot iteration
+    let frames_per_iteration = 1;
+    let mut current_iterations = 1;
+    let iteration_step = 1;
+    let mut pixels = calculate_mandelbrot(current_iterations, width, height);
+    
     canvas.render(move |_mouse, image| {
-        // Modify the `image` based on your state.
+
+        // unless we've reached the maximum number of iterations
+        // if we've exceeded the frame frame_count, recalcualte the points
+        // on the mandelbrot using an incremented iterations amount
+        if current_iterations < max_iterations && frame_count > frames_per_iteration {
+            frame_count = 0;
+            current_iterations += iteration_step;
+            pixels = calculate_mandelbrot(current_iterations, width, height);
+            println!("Number of iterations: {}", current_iterations);
+        }
+        
         let width = image.width() as usize;
         for (y, row) in image.chunks_mut(width).enumerate() {
             for (x, pixel) in row.iter_mut().enumerate() {
                 *pixel = pixels[x][y];
             }
         }
+
+        frame_count += 1;
     });
     
 }
@@ -73,24 +87,19 @@ fn calculate_mandelbrot(max_iterations: u32, width_u32: u32, height_u32: u32) ->
                 n += 1;
             }
 
-            let color = if n == max_iterations {
-                Color {
-                    r: 0,
-                    g: 0,
-                    b: 0
-                }
-            } else {
+
+            if n != max_iterations {
                 let val = f32::sqrt(n as f32 / max_iterations as f32);
                 let color_val = (val * 255.0) as u8;
-                Color {
+                let color = Color {
                     r: color_val,
                     g: color_val,
                     b: color_val
-                }
-            };
+                };
 
-                // draw a 1x1 rect to simulate a pixel
-            pixels[i as usize][j as usize] = color;
+                pixels[i as usize][j as usize] = color;
+
+            }
 
             x += dx;
 
