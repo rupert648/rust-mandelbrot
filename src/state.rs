@@ -1,9 +1,26 @@
+use pixel_canvas::input::glutin::event::ElementState;
+
+use crate::camera::CameraState;
+
 pub struct ProgramState {
     pub mandelbrot_state: MandelbrotState,
     /// any time the mandelbrot state is modified
     /// this is set to true -> forces re-calculation
     pub mandelbrot_state_modified: bool,
 
+    pub mouse_state: MouseState,
+
+    // camera handling
+    pub camera_state: CameraState,
+}
+
+pub struct MandelbrotState {
+    pub iterations: u32,
+    pub max_iterations: u32,
+    pub click_change_amount: u32,
+}
+
+pub struct MouseState {
     /// The x position from the lower-left corner, measured in physical pixels.
     /// This should always correspond to the column of the pixel in the image.
     pub x: i32,
@@ -17,20 +34,7 @@ pub struct ProgramState {
     /// measured in virtual pixels.
     pub virtual_y: i32,
 
-    // camera handling
-    pub camera_pos: CameraState,
-}
-
-pub struct MandelbrotState {
-    pub iterations: u32,
-    pub max_iterations: u32,
-    pub click_change_amount: u32,
-}
-
-///camera position centred onto one pixel
-pub struct CameraState {
-    pub x: i32,
-    pub y: i32,
+    pub element_state: ElementState,
 }
 
 impl ProgramState {
@@ -38,15 +42,13 @@ impl ProgramState {
         let camera_pos = CameraState::new();
         let mandelbrot_state =
             MandelbrotState::new(iterations, max_iterations, click_change_amount);
+        let mouse_state = MouseState::new();
 
         Self {
             mandelbrot_state,
             mandelbrot_state_modified: false,
-            x: 0,
-            y: 0,
-            virtual_x: 0,
-            virtual_y: 0,
-            camera_pos,
+            mouse_state,
+            camera_state: camera_pos,
         }
     }
 }
@@ -62,8 +64,14 @@ impl MandelbrotState {
     }
 }
 
-impl CameraState {
+impl MouseState {
     fn new() -> Self {
-        CameraState { x: 0, y: 0 }
+        Self {
+            x: 0,
+            y: 0,
+            virtual_x: 0,
+            virtual_y: 0,
+            element_state: ElementState::Released,
+        }
     }
 }

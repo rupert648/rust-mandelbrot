@@ -1,7 +1,10 @@
 use pixel_canvas::{
     canvas::CanvasInfo,
     input::{
-        glutin::event::{ElementState, KeyboardInput, VirtualKeyCode},
+        glutin::{
+            dpi::{PhysicalPosition, PhysicalSize},
+            event::{ElementState, KeyboardInput, MouseButton, VirtualKeyCode},
+        },
         Event, WindowEvent,
     },
 };
@@ -18,16 +21,14 @@ pub fn event_handler(
             event: WindowEvent::CursorMoved { position, .. },
             ..
         } => handle_mouse_move(position, program_state, info),
-        // Event::WindowEvent {
-        //     event: WindowEvent::MouseInput { state, button, .. },
-        //     ..
-        // }
-        // => handle_mouse_input(program_state, state, button),
+        Event::WindowEvent {
+            event: WindowEvent::MouseInput { state, .. },
+            ..
+        } => handle_mouse_input(program_state, state),
         Event::WindowEvent {
             event: WindowEvent::KeyboardInput { input, .. },
             ..
         } => handle_keyboard_input(program_state, input),
-        Event::NewEvents(_) => todo!(),
         _ => false,
     }
 }
@@ -38,28 +39,33 @@ fn handle_mouse_move(
     info: &CanvasInfo,
 ) -> bool {
     let (x, y): (i32, i32) = (*position).into();
-    program_state.virtual_x = x;
-    program_state.virtual_y = y;
-    program_state.x = (x as f64 * info.dpi) as i32;
-    program_state.y = ((info.height as i32 - y) as f64 * info.dpi) as i32;
+    let mouse_state = &mut program_state.mouse_state;
+    mouse_state.virtual_x = x;
+    mouse_state.virtual_y = y;
+    mouse_state.x = (x as f64 * info.dpi) as i32;
+    mouse_state.y = ((info.height as i32 - y) as f64 * info.dpi) as i32;
+
+    // if mouse is pressed down, drag camera with mouse
+    if mouse_state.element_state == ElementState::Pressed {}
+
     true
 }
 
-// fn handle_mouse_input(
-//     program_state: &mut ProgramState,
-//     state: &ElementState,
-//     button: &MouseButton,
-// ) -> bool {
-//     program_state.mouse_state = *state;
+fn handle_mouse_input(program_state: &mut ProgramState, state: &ElementState) -> bool {
+    // if just pressed, save the position of the mouse for use later
+    if program_state.mouse_state.element_state == ElementState::Released
+        && *state == ElementState::Pressed
+    {
+        program_state.camera_state.mouse_start_pos = PhysicalPosition::new(
+            program_state.mouse_state.virtual_x,
+            program_state.mouse_state.virtual_y,
+        );
+    }
 
-//     program_state.mouse_button = match button {
-//         MouseButton::Left => MouseButton::Left,
-//         MouseButton::Right => MouseButton::Right,
-//         // only allow right or left click, ignore other input
-//         _ => program_state.mouse_button,
-//     };
-//     true
-// }
+    program_state.mouse_state.element_state = *state;
+
+    true
+}
 
 fn handle_keyboard_input(program_state: &mut ProgramState, input: &KeyboardInput) -> bool {
     // only handle input on release
