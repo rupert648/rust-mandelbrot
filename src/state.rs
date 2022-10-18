@@ -1,6 +1,9 @@
-use pixel_canvas::input::glutin::event::{ElementState, MouseButton};
-
 pub struct ProgramState {
+    pub mandelbrot_state: MandelbrotState,
+    /// any time the mandelbrot state is modified
+    /// this is set to true -> forces re-calculation
+    pub mandelbrot_state_modified: bool,
+
     /// The x position from the lower-left corner, measured in physical pixels.
     /// This should always correspond to the column of the pixel in the image.
     pub x: i32,
@@ -14,28 +17,53 @@ pub struct ProgramState {
     /// measured in virtual pixels.
     pub virtual_y: i32,
 
-
-    /// the current state of the mouse
-    /// `Either Pressed` or `Released`
-    pub mouse_state: ElementState,
-    /// the last mouse button pressed
-    pub mouse_button: MouseButton,
-    ///
-    /// 
-    pub mouse_click_handled: bool,
+    // camera handling
+    pub camera_pos: CameraState,
 }
 
+pub struct MandelbrotState {
+    pub iterations: u32,
+    pub max_iterations: u32,
+    pub click_change_amount: u32,
+}
+
+///camera position centred onto one pixel
+pub struct CameraState {
+    pub x: i32,
+    pub y: i32,
+}
 
 impl ProgramState {
-    pub fn new() -> Self {
-        Self { 
+    pub fn new(iterations: u32, max_iterations: u32, click_change_amount: u32) -> Self {
+        let camera_pos = CameraState::new();
+        let mandelbrot_state =
+            MandelbrotState::new(iterations, max_iterations, click_change_amount);
+
+        Self {
+            mandelbrot_state,
+            mandelbrot_state_modified: false,
             x: 0,
             y: 0,
             virtual_x: 0,
             virtual_y: 0,
-            mouse_state: ElementState::Released,
-            mouse_button: MouseButton::Left,
-            mouse_click_handled: true
+            camera_pos,
         }
+    }
+}
+
+impl MandelbrotState {
+    fn new(iterations: u32, max_iterations: u32, click_change_amount: u32) -> Self {
+        // default mandelbrot values
+        MandelbrotState {
+            iterations,
+            max_iterations,
+            click_change_amount,
+        }
+    }
+}
+
+impl CameraState {
+    fn new() -> Self {
+        CameraState { x: 0, y: 0 }
     }
 }
